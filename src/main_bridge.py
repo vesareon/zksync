@@ -21,7 +21,7 @@ class MainBridge:
         amount_for_fee = Web3.to_wei(0.003, 'ether')
         amount = int(random.uniform(*BRIDGE_AMOUNT) * 10 ** 18)
 
-        if native_balance - amount_for_fee > amount:
+        if native_balance - amount_for_fee < amount:
             logging.warning(f'{self.account.address} | Main Bridge | Недостаточно баланса')
 
         try:
