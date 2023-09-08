@@ -29,7 +29,7 @@ class Account:
             json.dump(self.db, file, indent='\t')
 
     def check_enough_fee(self) -> bool:
-        fee = self.w3.eth.gas_price * 1000000
+        fee = self.w3.eth.gas_price * 950000
         return fee < self.get_native_balance()
 
     def get_native_balance(self) -> int:

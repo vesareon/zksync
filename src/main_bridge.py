@@ -39,9 +39,8 @@ class MainBridge:
                 'from': self.account.address,
                 'value': amount + base_cost,
                 'gas': 0,
-                'gasPrice': chain_w3.eth.gas_price,
-                'nonce': self.w3.eth.get_transaction_count(self.account.address),
-
+                'gasPrice': self.w3.eth.gas_price,
+                'nonce': self.w3.eth.get_transaction_count(self.account.address)
             })
 
             txn['gas'] = self.w3.eth.estimate_gas(txn)

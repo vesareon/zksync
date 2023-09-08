@@ -11,7 +11,7 @@ from config import TOKENS, INCH_ROUTER_ADDRESS, GAS_THRESHOLD
 
 
 class Inch:
-    def __init__(self, account: Account, retries: int = 0):
+    def __init__(self, account: Account, retries: int = 1):
         self.w3 = account.w3
         self.account = account
         self.retries = retries
@@ -41,7 +41,7 @@ class Inch:
             tx['maxFeePerGas'] = self.w3.eth.gas_price
             tx['maxPriorityFeePerGas'] = self.w3.eth.gas_price
             tx['chainId'] = self.w3.eth.chain_id
-            tx['gas'] = random.randint(920000, 1000000) if GAS_THRESHOLD < 21 else self.w3.eth.estimate_gas(txn)
+            tx['gas'] = random.randint(900000, 950000) if GAS_THRESHOLD < 21 else self.w3.eth.estimate_gas(tx)
             del tx['gasPrice']
 
             swap_txn_hash = self.sign_trans(tx, self.account.key)

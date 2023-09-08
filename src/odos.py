@@ -11,7 +11,7 @@ from config import TOKENS, ODOS_ROUTER_ADDRESS, PROXY, GAS_THRESHOLD
 
 
 class Odos:
-    def __init__(self, account: Account, retries: int = 2):
+    def __init__(self, account: Account, retries: int = 1):
         self.w3 = account.w3
         self.retries = retries
         self.account = account
@@ -44,12 +44,13 @@ class Odos:
             swap_txn['nonce'] = self.w3.eth.get_transaction_count(address)
             swap_txn['maxFeePerGas'] = self.w3.eth.gas_price
             swap_txn['maxPriorityFeePerGas'] = self.w3.eth.gas_price
-            swap_txn['gas'] = random.randint(890000, 1000000) if GAS_THRESHOLD < 21 else self.w3.eth.estimate_gas(txn)
+            swap_txn['gas'] = int(self.w3.eth.estimate_gas(swap_txn) * 0.75)
             del swap_txn['gasPrice']
 
             signed_swap_txn = self.w3.eth.account.sign_transaction(swap_txn, self.account.key)
             swap_txn_hash = self.w3.eth.send_raw_transaction(signed_swap_txn.rawTransaction)
             status = self.w3.eth.wait_for_transaction_receipt(swap_txn_hash, timeout=300).status
+            time.sleep(10)
 
             if status == 1:
                 trx = f'https://explorer.zksync.io/tx/{swap_txn_hash.hex()}'
@@ -60,7 +61,7 @@ class Odos:
                 logging.error(f'{address} | Odos swap {retry}/{self.retries} | {value_for_logs(from_token, amount)}'
                               f' -> {to_token}')
                 if retry < self.retries:
-                    time.sleep(random.randint(35, 60))
+                    time.sleep(random.randint(30, 40))
                     self.swap(from_token, to_token, amount, retry + 1)
                 else:
                     return False
@@ -69,7 +70,7 @@ class Odos:
             logging.error(f'{address} | Odos swap {retry}/{self.retries} | {value_for_logs(from_token, amount)}'
                           f' -> {to_token} | {err}')
             if retry < self.retries:
-                time.sleep(random.randint(35, 60))
+                time.sleep(random.randint(30, 40))
                 self.swap(from_token, to_token, amount, retry + 1)
             else:
                 return False
@@ -132,14 +133,3 @@ class Odos:
         except Exception as err:
             logging.error(f'Error: {err}')
             return False
-
-    def get_amount_out(self, from_token: str, from_token_address: str, from_amount: float):
-        currency_id = 'USD' if from_token == 'eth' else 'ETH'
-
-        url = f'https://api.odos.xyz/pricing/token/324/{from_token_address}?currencyId={currency_id}'
-        data = self.get_api_call_data(url)
-        price = data['price']
-        print(price)
-
-        amount_out = from_amount * int(price)
-        return int(amount_out * 10 ** 6) if from_token == 'eth' else int(Web3.to_wei(amount_out, 'ether'))

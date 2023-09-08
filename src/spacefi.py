@@ -11,7 +11,7 @@ from config import TOKENS, SPACEFI_ROUTER_ADDRESS, LIQUIDITY_AMOUNT, GAS_THRESHO
 
 
 class SpaceFi:
-    def __init__(self, account: Account, retries: int = 2):
+    def __init__(self, account: Account, retries: int = 1):
         self.w3 = account.w3
         self.retries = retries
         self.account = account
@@ -63,7 +63,7 @@ class SpaceFi:
                 else:
                     swap_txn = self.router.functions.swapExactTokensForTokens(*params).build_transaction(txn_info)
 
-            swap_txn['gas'] = random.randint(890000, 1000000) if GAS_THRESHOLD < 21 else self.w3.eth.estimate_gas(txn)
+            swap_txn['gas'] = random.randint(870000, 950000) if GAS_THRESHOLD < 21 else self.w3.eth.estimate_gas(swap_txn)
             signed_swap_txn = self.w3.eth.account.sign_transaction(swap_txn, self.account.key)
             swap_txn_hash = self.w3.eth.send_raw_transaction(signed_swap_txn.rawTransaction)
             status = self.w3.eth.wait_for_transaction_receipt(swap_txn_hash, timeout=300).status

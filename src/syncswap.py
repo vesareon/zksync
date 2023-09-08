@@ -13,7 +13,7 @@ from config import SYNCSWAP_CLASSIC_POOL_FACTORY_ADDRESS, SYNCSWAP_STABLE_POOL_F
 
 
 class SyncSwap:
-    def __init__(self, account: Account, slippage: float = 0.5, retries: int = 2) -> None:
+    def __init__(self, account: Account, slippage: float = 0.5, retries: int = 1) -> None:
         self.w3 = account.w3
         self.account = account
         self.retries = retries
@@ -70,7 +70,7 @@ class SyncSwap:
                 'gasPrice': self.w3.eth.gas_price
             })
 
-            swap_txn['gas'] = random.randint(870000, 1000000) if GAS_THRESHOLD < 21 else self.w3.eth.estimate_gas(txn)
+            swap_txn['gas'] = random.randint(870000, 950000) if GAS_THRESHOLD < 21 else self.w3.eth.estimate_gas(swap_txn)
             signed_swap_txn = self.w3.eth.account.sign_transaction(swap_txn, self.account.key)
             swap_txn_hash = self.w3.eth.send_raw_transaction(signed_swap_txn.rawTransaction)
             status = self.w3.eth.wait_for_transaction_receipt(swap_txn_hash, timeout=300).status

@@ -29,6 +29,8 @@ class Runner:
     def start(self):
         address = self.account.address
         transactions = self.account.db[address]["transactions"]
+
+        logging.info(f'{address} | Запуск')
         
         response_status = self.dapps['odos'].check_response()
         if not response_status and self.account.progress['volumes']:
@@ -63,8 +65,11 @@ class Runner:
         if self.account.progress['bridge']:
             status = MainBridge(self.account).deposit()
             self.account.progress['bridge'] = False
+            self.account.save_db()
             time.sleep(random.randint(60, 120))
-            while self.account.get_native_balance() == 0 and status:
+            attempt = 0
+            while status and self.account.get_native_balance() == 0 and attempt < 5:
+                attempt += 1
                 time.sleep(random.randint(60, 120))
 
         iters_per_dapps = self.account.init_iters_per_dapps()
@@ -105,10 +110,8 @@ class Runner:
 
         if from_token == 'usdt':
             amount = self.get_amount(from_token, True)
-            if amount < 0:
-                logging.error(f'{self.account.address} | Недостаточно ETH для оплаты газа')
+            if not dapp.swap(from_token, 'eth', amount):
                 return
-            dapp.swap(from_token, 'eth', amount)
             from_token = 'eth'
             time.sleep(random.randint(*SLEEP_TRANSACTIONS))
 
@@ -124,7 +127,8 @@ class Runner:
             if amount < 0 or from_token == to_token:
                 logging.error(f'{self.account.address} | Недостаточно ETH для оплаты газа')
                 return
-            elif not dapp.swap(from_token, to_token, amount):
+
+            if not dapp.swap(from_token, to_token, amount):
                 break
 
             self.account.progress['transactions'] -= 1
@@ -151,12 +155,12 @@ class Runner:
         if not self.account.check_enough_fee():
             return 'eth', 'eth'
         elif from_token != 'eth' and self.account.get_native_balance() < 0.000635 * 10 ** 18:
-            if dapp_name == 'woofi':
+            if dapp_name == 'woofi' and from_token != 'usdc':
                 self.dapps[random_dex].swap(from_token, 'eth', self.get_amount(from_token))
                 time.sleep(random.randint(*SLEEP_TRANSACTIONS))
-                from_token = 'eth'
-
-            return from_token, 'eth'
+                return self.choice_token_pair(dapp_name, tokens, 'eth')
+            else:
+                return from_token, 'eth'
 
         if dapp_name == 'woofi':
             to_token = 'usdc' if from_token == 'eth' else 'eth'
@@ -176,7 +180,7 @@ class Runner:
         if from_token == 'eth' and volumes:
             amount = self.account.get_native_balance() - int(random.uniform(*MIN_BALANCE_FOR_GAS) * 10 ** 18)
         elif from_token == 'eth':
-            amount = (self.account.get_native_balance() - 0.00027 * 10 ** 18) * random.uniform(*BALANCE_PERCENTAGE)
+            amount = (self.account.get_native_balance() - 0.00038 * 10 ** 18) * random.uniform(*BALANCE_PERCENTAGE)
         else:
             amount = self.account.get_token_data(TOKENS[from_token])['balance_wei']
 

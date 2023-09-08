@@ -4,7 +4,7 @@ import random
 from web3 import Web3
 
 from src.account import Account
-from config import SPACEFI_DEPOSIT, SYNCSWAP_DEPOSIT
+from config import SPACEFI_DEPOSIT, SYNCSWAP_DEPOSIT, GAS_THRESHOLD
 
 
 def get_accounts(path: str) -> list[Account]:
@@ -40,19 +40,19 @@ def create_db(accounts: list[Account], transactions: list[int], volumes: bool, b
 
 def check_allowance(chain, token, address, router_address, amount, key):
     allowance = token.functions.allowance(address, router_address).call()
-    coef = random.choice([1, random.randint(5, 10)])
+    # coef = random.choice([1, random.randint(5, 10)])
     if allowance < amount:
-        approve_txn = token.functions.approve(router_address, amount * coef).build_transaction({
+        approve_txn = token.functions.approve(router_address, amount).build_transaction({
             'from': address,
             'gas': 0,
             'gasPrice': chain.eth.gas_price,
             'nonce': chain.eth.get_transaction_count(address)
         })
-        gas_limit = chain.eth.estimate_gas(approve_txn)
-        approve_txn['gas'] = int(gas_limit * random.uniform(1.05, 1.1))
+        approve_txn['gas'] = chain.eth.estimate_gas(approve_txn)
 
         signed_approve_txn = chain.eth.account.sign_transaction(approve_txn, key)
         approve_txn_hash = chain.eth.send_raw_transaction(signed_approve_txn.rawTransaction)
+        chain.eth.wait_for_transaction_receipt(approve_txn_hash, timeout=300)
         time.sleep(random.randint(15, 20))
 
 

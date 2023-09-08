@@ -47,7 +47,7 @@ class WooFi:
                 'maxPriorityFeePerGas': self.w3.eth.gas_price
             })
 
-            swap_txn['gas'] = random.randint(890000, 1000000) if GAS_THRESHOLD < 21 else self.w3.eth.estimate_gas(txn)
+            swap_txn['gas'] = random.randint(870000, 950000) if GAS_THRESHOLD < 21 else self.w3.eth.estimate_gas(swap_txn)
             signed_swap_txn = self.w3.eth.account.sign_transaction(swap_txn, self.account.key)
             swap_txn_hash = self.w3.eth.send_raw_transaction(signed_swap_txn.rawTransaction)
             status = self.w3.eth.wait_for_transaction_receipt(swap_txn_hash, timeout=300).status
